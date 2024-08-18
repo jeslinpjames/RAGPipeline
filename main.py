@@ -5,7 +5,7 @@ from modules.llm_interface import send_prompt
 from modules.rag_pipeline import run_rag_pipeline
 
 # 1. Load and process the PDF
-pdf_filename = "C:/Users/jesli/Downloads/User_Guide.pdf"  # Replace with your PDF file name
+pdf_filename = "PDFs/infosys-esg-report-2022-23.pdf"  # Replace with your PDF file name
 table_elements, text_elements = load_and_partition_pdf(pdf_filename)
 
 # 2. Summarize the table elements only
