@@ -3,6 +3,7 @@ from modules.data_processing import load_and_partition_pdf
 from modules.vector_store import initialize_vector_store, add_documents_to_vector_store
 from modules.llm_interface import send_prompt
 from modules.rag_pipeline import run_rag_pipeline
+from modules.web_scraping import add_website_to_vector_store  
 
 # 1. Load and process the PDF
 pdf_filename = "PDFs/infosys-esg-report-2022-23.pdf"  # Replace with your PDF file name
@@ -39,9 +40,13 @@ add_documents_to_vector_store(
     table_summaries=table_summaries  # Use summarized tables
 )
 
-# 4. Ask a question and pass the retriever to the pipeline
-question = "What is silhouette?"
+# 4. Add website content to the vector store
+url = "https://en.wikipedia.org/wiki/Llama_(language_model)"  # Replace with the actual website URL
+add_website_to_vector_store(url, retriever, store)
+
+# 5. Ask a question and pass the retriever to the pipeline
+question = "What is ESG?"
 answer = run_rag_pipeline(question, retriever)
 
-# 5. Print the answer
+# 6. Print the answer
 print("Answer:", answer)
