@@ -1,0 +1,296 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RAG Application</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        input[type="file"],
+        input[type="text"],
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+
+        #progress-container {
+            width: 100%;
+            background-color: #f3f3f3;
+            margin-top: 20px;
+            display: none;
+        }
+
+        #progress-bar {
+            width: 0%;
+            height: 30px;
+            background-color: #4caf50;
+            text-align: center;
+            line-height: 30px;
+            color: white;
+        }
+
+        .chat-container {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #e9e9e9;
+            border-radius: 8px;
+            max-height: 400px;
+            overflow-y: auto;
+            display: flex;
+            flex-direction: column;
+        }
+
+        .chat-bubble {
+            margin: 10px 0;
+            padding: 10px 15px;
+            border-radius: 15px;
+            max-width: 70%;
+        }
+
+        .user-bubble {
+            background-color: #007bff;
+            color: white;
+            align-self: flex-end;
+            text-align: right;
+        }
+
+        .model-bubble {
+            background-color: #f1f1f1;
+            color: #333;
+            align-self: flex-start;
+            text-align: left;
+        }
+
+        .list-container {
+            margin-top: 20px;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>RAG Application</h2>
+
+        <div class="form-group">
+            <label for="pdf">Upload PDF:</label>
+            <form id="pdf-form">
+                <input type="file" id="pdf" name="pdf">
+                <button type="submit">Upload PDF</button>
+            </form>
+        </div>
+
+        <div class="form-group">
+            <label for="url">Add Website URL:</label>
+            <form id="website-form">
+                <input type="text" id="url" name="url" placeholder="Enter website URL">
+                <button type="submit">Add Website</button>
+            </form>
+        </div>
+
+        <div id="progress-container">
+            <div id="progress-bar">0%</div>
+        </div>
+
+        <div class="chat-container" id="chat-container">
+            <!-- Chat messages will be appended here -->
+        </div>
+
+        <div class="form-group">
+            <label for="question">Ask a Question:</label>
+            <form id="chat-form">
+                <input type="text" id="question" name="question" placeholder="Enter your question">
+                <button type="submit" id="send-button">Send</button>
+            </form>
+        </div>
+
+        <div class="list-container">
+            <h3>Uploaded PDFs:</h3>
+            <ul id="pdf-list">
+                {% for pdf in pdfs %}
+                    <li>{{ pdf }}</li>
+                {% endfor %}
+            </ul>
+
+            <h3>Added Websites:</h3>
+            <ul id="website-list">
+                {% for website in websites %}
+                    <li>{{ website }}</li>
+                {% endfor %}
+            </ul>
+        </div>
+    </div>
+
+    <script>
+        const pdfForm = document.getElementById('pdf-form');
+        const websiteForm = document.getElementById('website-form');
+        const chatForm = document.getElementById('chat-form');
+        const chatContainer = document.getElementById('chat-container');
+        const sendButton = document.getElementById('send-button');
+        const progressBar = document.getElementById('progress-bar');
+        const progressContainer = document.getElementById('progress-container');
+        const pdfList = document.getElementById('pdf-list');
+        const websiteList = document.getElementById('website-list');
+
+        pdfForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(pdfForm);
+
+            progressContainer.style.display = 'block';
+            const response = await fetch('/upload_pdf', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                let progress = 0;
+
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    progressBar.style.width = progress + '%';
+                    progressBar.textContent = progress + '%';
+
+                    if (progress >= 100) {
+                        clearInterval(progressInterval);
+                        progressBar.textContent = 'Upload Complete!';
+                        pdfList.innerHTML += `<li>${result.pdf}</li>`;
+                        setTimeout(() => {
+                            progressContainer.style.display = 'none';
+                            progressBar.style.width = '0%';
+                            progressBar.textContent = '0%';
+                        }, 2000);
+                    }
+                }, 100);
+            } else {
+                progressBar.textContent = 'Upload Failed!';
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 2000);
+            }
+        };
+
+        websiteForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(websiteForm);
+
+            progressContainer.style.display = 'block';
+            const response = await fetch('/add_website', {
+                method: 'POST',
+                body: formData,
+            });
+
+            if (response.ok) {
+                const result = await response.json();
+                let progress = 0;
+
+                const progressInterval = setInterval(() => {
+                    progress += 10;
+                    progressBar.style.width = progress + '%';
+                    progressBar.textContent = progress + '%';
+
+                    if (progress >= 100) {
+                        clearInterval(progressInterval);
+                        progressBar.textContent = 'Processing Complete!';
+                        websiteList.innerHTML += `<li>${result.website}</li>`;
+                        setTimeout(() => {
+                            progressContainer.style.display = 'none';
+                            progressBar.style.width = '0%';
+                            progressBar.textContent = '0%';
+                        }, 2000);
+                    }
+                }, 100);
+            } else {
+                progressBar.textContent = 'Processing Failed!';
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                }, 2000);
+            }
+        };
+
+        chatForm.onsubmit = async (e) => {
+            e.preventDefault();
+            const questionInput = document.getElementById('question');
+            const question = questionInput.value.trim();
+
+            if (!question) return;
+
+            // Disable send button to prevent multiple submissions
+            sendButton.disabled = true;
+
+            // Clear input field after sending
+            questionInput.value = '';
+
+            // Add user message to chat
+            const userBubble = document.createElement('div');
+            userBubble.className = 'chat-bubble user-bubble';
+            userBubble.textContent = question;
+            chatContainer.appendChild(userBubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            const formData = new FormData();
+            formData.append('question', question);
+
+            const response = await fetch('/chat', {
+                method: 'POST',
+                body: formData,
+            });
+
+            const answer = await response.json();
+
+            // Add model response to chat
+            const modelBubble = document.createElement('div');
+            modelBubble.className = 'chat-bubble model-bubble';
+            modelBubble.textContent = answer.answer;
+            chatContainer.appendChild(modelBubble);
+            chatContainer.scrollTop = chatContainer.scrollHeight;
+
+            // Re-enable send button
+            sendButton.disabled = false;
+        };
+    </script>
+</body>
+</html>
