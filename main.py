@@ -11,11 +11,20 @@ table_elements, text_elements = load_and_partition_pdf(pdf_filename)
 
 # 2. Summarize the table elements only
 def summarize_element(element):
-    prompt_template = "You are an assistant tasked with summarizing tables and text. \
-    Give a concise summary of the table or text. Table or text chunk: {element}"
+    prompt_template = """
+    You are a data analyst specialized in interpreting and summarizing tables. The following content is a table extracted from a document. 
+    Please provide a concise summary that highlights the key insights, trends, or important points from this table. Your summary should be 
+    understandable to someone without access to the table and should include any notable comparisons, patterns, or outliers.
+    
+    Table:
+    {element}
+    
+    Summary:
+    """
     prompt = prompt_template.format(element=element)
     response = send_prompt(prompt)
     return response
+
 
 def batch_summarize_tables(elements):
     summaries = []
