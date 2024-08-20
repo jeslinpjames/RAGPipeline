@@ -1,10 +1,11 @@
 import os
-from flask import Flask, request, render_template, jsonify
+from flask import Flask, request, render_template, jsonify, redirect, url_for
 from modules.rag_pipeline import run_rag_pipeline
 from modules.data_processing import load_and_partition_pdf
 from modules.vector_store import initialize_vector_store, add_documents_to_vector_store
 from modules.web_scraping import add_website_to_vector_store
-from modules.llm_interface import send_prompt
+from modules.survey_creation import SurveyManager
+from modules.survey_answering import SurveyAnswerer
 from werkzeug.utils import secure_filename
 import time
 
@@ -13,31 +14,13 @@ app.config['UPLOAD_FOLDER'] = 'uploads/'
 
 if not os.path.exists(app.config['UPLOAD_FOLDER']):
     os.makedirs(app.config['UPLOAD_FOLDER'])
-    
-def summarize_element(element):
-    prompt_template = """
-    You are a data analyst specialized in interpreting and summarizing tables. The following content is a table extracted from a document. 
-    Please provide a concise summary that highlights the key insights, trends, or important points from this table. Your summary should be 
-    understandable to someone without access to the table and should include any notable comparisons, patterns, or outliers.
-    
-    Table:
-    {element}
-    
-    Summary:
-    """
-    prompt = prompt_template.format(element=element)
-    response = send_prompt(prompt)
-    return response
-
-def batch_summarize_tables(elements):
-    summaries = []
-    for element in elements:
-        summary = summarize_element(element)
-        summaries.append(summary)
-    return summaries
 
 # Initialize the vector store and retriever
 retriever, store = initialize_vector_store()
+
+# Initialize survey manager and answerer
+survey_manager = SurveyManager()
+survey_answerer = SurveyAnswerer(retriever)
 
 uploaded_pdfs = []
 uploaded_websites = []
@@ -62,8 +45,14 @@ def upload_pdf():
         time.sleep(1)
 
         table_elements, text_elements = load_and_partition_pdf(file_path)
-        table_summaries = batch_summarize_tables([e.text for e in table_elements])
-        add_documents_to_vector_store(retriever, store, [e.text for e in text_elements], [e.text for e in table_elements], [e.text for e in text_elements], table_summaries)
+        add_documents_to_vector_store(
+            retriever, 
+            store, 
+            [e.text for e in text_elements], 
+            [e.text for e in table_elements], 
+            text_summaries=[e.text for e in text_elements], 
+            table_summaries=[e.text for e in table_elements]
+        )
 
         uploaded_pdfs.append(filename)
         return jsonify(success=True, pdf=filename)
@@ -84,6 +73,28 @@ def chat():
     question = request.form['question']
     answer = run_rag_pipeline(question, retriever)
     return jsonify(answer=answer)
+
+@app.route('/create-survey', methods=['GET', 'POST'])
+def create_survey():
+    if request.method == 'POST':
+        title = request.form['survey-title']
+        questions = [request.form[key] for key in request.form if key.startswith('question')]
+        survey = survey_manager.create_survey(title)
+        for question in questions:
+            survey.add_question(question)
+        survey_answerer.add_survey(survey)
+        return redirect(url_for('survey_results_list'))
+    return render_template('survey.html')
+
+@app.route('/survey-results')
+def survey_results_list():
+    surveys = survey_manager.get_all_surveys()
+    return render_template('survey_results_list.html', surveys=surveys)
+
+@app.route('/survey-results/<survey_title>')
+def survey_results(survey_title):
+    answered_survey = survey_answerer.answer_survey(survey_title)
+    return render_template('survey_results.html', survey=answered_survey)
 
 if __name__ == '__main__':
     app.run(debug=True)
