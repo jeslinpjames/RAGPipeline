@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        h2 a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        h2 a:hover {
+            text-decoration: underline;
+        }
+        .survey-result {
+            margin-top: 20px;
+            padding: 10px;
+            border-bottom: 1px solid #ddd;
+        }
+        .survey-result:last-child {
+            border-bottom: none;
+        }
+        .survey-result h3 {
+            color: #007bff;
+        }
+        .survey-result p {
+            color: #333;
+        }
+        .back-link {
+            display: block;
+            margin-top: 20px;
+            text-align: center;
+            text-decoration: none;
+            color: #007bff;
+            font-weight: bold;
+        }
+        .back-link:hover {
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2><a href="{{ url_for('home') }}">RAG Application</a></h2>
+        <h2>Survey Results for "{{ survey.title }}"</h2>
+        {% for question, answer in survey.get_answers().items() %}
+        <div class="survey-result">
+            <h3>{{ question }}</h3>
+            <p>{{ answer }}</p>
+        </div>
+        {% endfor %}
+        <a href="{{ url_for('survey_results_list') }}" class="back-link">Back to Surveys</a>
+    </div>
+</body>
+</html>

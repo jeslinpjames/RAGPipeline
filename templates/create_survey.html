@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Survey</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        h2 a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        h2 a:hover {
+            text-decoration: underline;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+
+        input[type="text"], textarea {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+
+        button {
+            width: 100%;
+            padding: 10px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+        }
+
+        button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+
+        .questions-group {
+            margin-bottom: 15px;
+        }
+
+        .add-question {
+            margin-top: 10px;
+            cursor: pointer;
+            color: #007bff;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2><a href="{{ url_for('home') }}">RAG Application</a></h2>
+        <h2>Create Survey</h2>
+
+        <form id="survey-form">
+            <div class="form-group">
+                <label for="title">Survey Title:</label>
+                <input type="text" id="title" name="title" required>
+            </div>
+
+            <div id="questions-container">
+                <div class="form-group questions-group">
+                    <label for="question">Question 1:</label>
+                    <input type="text" name="questions" required>
+                </div>
+            </div>
+
+            <div class="add-question">+ Add another question</div>
+
+            <button type="submit">Create Survey</button>
+        </form>
+    </div>
+
+    <script>
+        const questionsContainer = document.getElementById('questions-container');
+        const addQuestionBtn = document.querySelector('.add-question');
+        let questionCount = 1;
+
+        addQuestionBtn.onclick = () => {
+            questionCount++;
+            const newQuestion = document.createElement('div');
+            newQuestion.classList.add('form-group', 'questions-group');
+            newQuestion.innerHTML = `
+                <label for="question">Question ${questionCount}:</label>
+                <input type="text" name="questions" required>
+            `;
+            questionsContainer.appendChild(newQuestion);
+        };
+
+        document.getElementById('survey-form').onsubmit = async (e) => {
+            e.preventDefault();
+            const formData = new FormData(e.target);
+
+            const response = await fetch('/create_survey', {
+                method: 'POST',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Survey created successfully!');
+            } else {
+                alert('Failed to create survey.');
+            }
+        };
+    </script>
+</body>
+</html>

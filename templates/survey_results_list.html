@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Survey Results</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+            margin-bottom: 30px;
+        }
+        h2 a {
+            text-decoration: none;
+            color: #007bff;
+        }
+        h2 a:hover {
+            text-decoration: underline;
+        }
+        .survey-list {
+            margin-top: 20px;
+        }
+        .survey-item {
+            padding: 15px;
+            margin-bottom: 10px;
+            background-color: #007bff;
+            color: white;
+            border-radius: 8px;
+            text-align: center;
+            text-decoration: none;
+            display: block;
+            font-weight: bold;
+        }
+        .survey-item:hover {
+            background-color: #0056b3;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2><a href="{{ url_for('home') }}">RAG Application</a></h2>
+        <h2>Available Surveys</h2>
+        <div class="survey-list">
+            {% for survey in surveys %}
+            <a href="{{ url_for('survey_results', survey_title=survey.title) }}" class="survey-item">{{ survey.title }}</a>
+            {% endfor %}
+        </div>
+    </div>
+</body>
+</html>
