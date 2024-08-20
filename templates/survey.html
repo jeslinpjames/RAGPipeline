@@ -1,0 +1,113 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Create Survey</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f4f4f4;
+            margin: 0;
+            padding: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        h2 {
+            text-align: center;
+            color: #333;
+        }
+        .form-group {
+            margin-bottom: 20px;
+        }
+        label {
+            font-weight: bold;
+            margin-bottom: 5px;
+            display: block;
+        }
+        input[type="text"],
+        button {
+            width: 100%;
+            padding: 10px;
+            margin-top: 5px;
+            border-radius: 5px;
+            border: 1px solid #ccc;
+            box-sizing: border-box;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:disabled {
+            background-color: #ddd;
+            cursor: not-allowed;
+        }
+        #questions-container {
+            margin-top: 20px;
+        }
+        #questions-container .form-group {
+            display: flex;
+            align-items: center;
+        }
+        #questions-container .form-group input[type="text"] {
+            flex: 1;
+        }
+        #questions-container .form-group button {
+            width: auto;
+            margin-left: 10px;
+            background-color: #dc3545;
+            border: none;
+        }
+        .add-question {
+            margin-top: 20px;
+            background-color: #28a745;
+            border: none;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h2>Create Survey</h2>
+        <form id="survey-form" method="POST" action="{{ url_for('create_survey') }}">
+            <div class="form-group">
+                <label for="survey-title">Survey Title:</label>
+                <input type="text" id="survey-title" name="survey-title" placeholder="Enter survey title" required>
+            </div>
+            <div id="questions-container">
+                <div class="form-group">
+                    <input type="text" name="question1" placeholder="Enter question 1" required>
+                    <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
+                </div>
+            </div>
+            <button type="button" class="add-question" onclick="addQuestion()">Add Question</button>
+            <button type="submit">Create Survey</button>
+        </form>
+    </div>
+    <script>
+        let questionCount = 1;
+
+        function addQuestion() {
+            questionCount++;
+            const questionGroup = document.createElement('div');
+            questionGroup.className = 'form-group';
+            questionGroup.innerHTML = `
+                <input type="text" name="question${questionCount}" placeholder="Enter question ${questionCount}" required>
+                <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
+            `;
+            document.getElementById('questions-container').appendChild(questionGroup);
+        }
+
+        function removeQuestion(button) {
+            const questionGroup = button.parentNode;
+            questionGroup.parentNode.removeChild(questionGroup);
+        }
+    </script>
+</body>
+</html>
