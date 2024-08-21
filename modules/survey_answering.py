@@ -26,3 +26,30 @@ class SurveyAnswerer:
         # Cache the answers
         self.answers_cache[survey_title] = survey
         return survey
+
+    def regenerate_survey_answers(self, survey_title):
+        survey = self.surveys.get(survey_title)
+        if not survey:
+            return None
+
+        # Regenerate answers
+        for question in survey.get_questions():
+            answer = run_rag_pipeline(question, self.retriever)
+            survey.add_answer(question, answer)
+        
+        # Update the cache with new answers
+        self.answers_cache[survey_title] = survey
+        return survey
+
+    def regenerate_answer_for_question(self, survey_title, question):
+        survey = self.surveys.get(survey_title)
+        if not survey:
+            return None
+
+        # Regenerate the answer for the specific question
+        answer = run_rag_pipeline(question, self.retriever)
+        survey.add_answer(question, answer)
+        
+        # Update the cache with the new answer
+        self.answers_cache[survey_title] = survey
+        return answer

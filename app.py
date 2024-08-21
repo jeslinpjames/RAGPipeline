@@ -86,6 +86,50 @@ def create_survey():
         return redirect(url_for('survey_results_list'))
     return render_template('survey.html')
 
+@app.route('/edit_survey/<title>', methods=['GET', 'POST'])
+def edit_survey(title):
+    normalized_title = title.strip().lower()
+    survey = survey_manager.get_survey(normalized_title)
+    if not survey:
+        return f"Survey with title '{title}' does not exist.", 404
+    
+    if request.method == 'POST':
+        # Update the survey with the new questions
+        questions = [request.form[key] for key in request.form if key.startswith('question')]
+        survey_manager.edit_survey(normalized_title, questions)
+        return redirect(url_for('survey_results_list'))
+
+    # Pass the existing survey data to the template
+    return render_template('survey.html', survey=survey)
+
+
+@app.route('/delete_survey/<title>', methods=['GET'])
+def delete_survey(title):
+    normalized_title = title.strip().lower()
+    try:
+        survey_manager.delete_survey(normalized_title)
+        return redirect(url_for('survey_results_list'))
+    except ValueError as e:
+        return str(e), 404
+
+@app.route('/regenerate_answer/<survey_title>/<question>')
+def regenerate_answer(survey_title, question):
+    answer = survey_answerer.regenerate_answer_for_question(survey_title, question)
+    if answer:
+        print(f"Regenerated answer: {answer}")
+        return jsonify(success=True, answer=answer)
+    print("Failed to regenerate answer.")
+    return jsonify(success=False)
+
+@app.route('/regenerate_survey/<survey_title>')
+def regenerate_survey(survey_title):
+    survey = survey_manager.get_survey(survey_title)
+    if survey:
+        survey_answerer.clear_answers(survey_title)  # Clear previous answers
+        survey_answerer.answer_survey(survey_title)  # Regenerate all answers
+        return jsonify(success=True)
+    return jsonify(success=False)
+
 @app.route('/survey-results')
 def survey_results_list():
     surveys = survey_manager.get_all_surveys()

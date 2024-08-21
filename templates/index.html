@@ -22,14 +22,6 @@
         h2 {
             text-align: center;
             color: #333;
-            margin-bottom: 30px;
-        }
-        h2 a {
-            text-decoration: none;
-            color: #007bff;
-        }
-        h2 a:hover {
-            text-decoration: underline;
         }
         .form-group {
             margin-bottom: 20px;
@@ -58,13 +50,15 @@
             background-color: #ddd;
             cursor: not-allowed;
         }
-        #progress-container {
+        #progress-container,
+        #website-progress-container {
             width: 100%;
             background-color: #f3f3f3;
             margin-top: 20px;
             display: none;
         }
-        #progress-bar {
+        #progress-bar,
+        #website-progress-bar {
             width: 0%;
             height: 30px;
             background-color: #4caf50;
@@ -116,23 +110,26 @@
 </head>
 <body>
     <div class="container">
-        <h2><a href="{{ url_for('home') }}">RAG Application</a></h2>
+        <h2>RAG Application</h2>
         <div class="form-group">
             <label for="pdf">Upload PDF:</label>
             <form id="pdf-form">
-                <input type="file" id="pdf" name="pdf">
+                <input type="file" id="pdf" name="pdf" required>
                 <button type="submit">Upload PDF</button>
+                <div id="progress-container">
+                    <div id="progress-bar">0%</div>
+                </div>
             </form>
         </div>
         <div class="form-group">
             <label for="url">Add Website URL:</label>
             <form id="website-form">
-                <input type="text" id="url" name="url" placeholder="Enter website URL">
+                <input type="text" id="url" name="url" placeholder="Enter website URL" required>
                 <button type="submit">Add Website</button>
+                <div id="website-progress-container">
+                    <div id="website-progress-bar">0%</div>
+                </div>
             </form>
-        </div>
-        <div id="progress-container">
-            <div id="progress-bar">0%</div>
         </div>
         <div class="chat-container" id="chat-container"></div>
         <div class="form-group">
@@ -169,6 +166,8 @@
         const sendButton = document.getElementById('send-button');
         const progressBar = document.getElementById('progress-bar');
         const progressContainer = document.getElementById('progress-container');
+        const websiteProgressBar = document.getElementById('website-progress-bar');
+        const websiteProgressContainer = document.getElementById('website-progress-container');
         const pdfList = document.getElementById('pdf-list');
         const websiteList = document.getElementById('website-list');
 
@@ -176,32 +175,38 @@
             e.preventDefault();
             const formData = new FormData(pdfForm);
             progressContainer.style.display = 'block';
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                progressBar.style.width = progress + '%';
+                progressBar.textContent = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                }
+            }, 100);
+
             const response = await fetch('/upload_pdf', {
                 method: 'POST',
                 body: formData,
             });
+
+            clearInterval(progressInterval);
             if (response.ok) {
                 const result = await response.json();
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += 10;
-                    progressBar.style.width = progress + '%';
-                    progressBar.textContent = progress + '%';
-                    if (progress >= 100) {
-                        clearInterval(progressInterval);
-                        progressBar.textContent = 'Upload Complete!';
-                        pdfList.innerHTML += `<li>${result.pdf}</li>`;
-                        setTimeout(() => {
-                            progressContainer.style.display = 'none';
-                            progressBar.style.width = '0%';
-                            progressBar.textContent = '0%';
-                        }, 2000);
-                    }
-                }, 100);
+                progressBar.style.width = '100%';
+                progressBar.textContent = 'Upload Complete!';
+                pdfList.innerHTML += `<li>${result.pdf}</li>`;
+                setTimeout(() => {
+                    progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    progressBar.textContent = '0%';
+                }, 2000);
             } else {
                 progressBar.textContent = 'Upload Failed!';
                 setTimeout(() => {
                     progressContainer.style.display = 'none';
+                    progressBar.style.width = '0%';
+                    progressBar.textContent = '0%';
                 }, 2000);
             }
         };
@@ -209,33 +214,39 @@
         websiteForm.onsubmit = async (e) => {
             e.preventDefault();
             const formData = new FormData(websiteForm);
-            progressContainer.style.display = 'block';
+            websiteProgressContainer.style.display = 'block';
+            let progress = 0;
+            const progressInterval = setInterval(() => {
+                progress += 10;
+                websiteProgressBar.style.width = progress + '%';
+                websiteProgressBar.textContent = progress + '%';
+                if (progress >= 100) {
+                    clearInterval(progressInterval);
+                }
+            }, 100);
+
             const response = await fetch('/add_website', {
                 method: 'POST',
                 body: formData,
             });
+
+            clearInterval(progressInterval);
             if (response.ok) {
                 const result = await response.json();
-                let progress = 0;
-                const progressInterval = setInterval(() => {
-                    progress += 10;
-                    progressBar.style.width = progress + '%';
-                    progressBar.textContent = progress + '%';
-                    if (progress >= 100) {
-                        clearInterval(progressInterval);
-                        progressBar.textContent = 'Processing Complete!';
-                        websiteList.innerHTML += `<li>${result.website}</li>`;
-                        setTimeout(() => {
-                            progressContainer.style.display = 'none';
-                            progressBar.style.width = '0%';
-                            progressBar.textContent = '0%';
-                        }, 2000);
-                    }
-                }, 100);
-            } else {
-                progressBar.textContent = 'Processing Failed!';
+                websiteProgressBar.style.width = '100%';
+                websiteProgressBar.textContent = 'Processing Complete!';
+                websiteList.innerHTML += `<li>${result.website}</li>`;
                 setTimeout(() => {
-                    progressContainer.style.display = 'none';
+                    websiteProgressContainer.style.display = 'none';
+                    websiteProgressBar.style.width = '0%';
+                    websiteProgressBar.textContent = '0%';
+                }, 2000);
+            } else {
+                websiteProgressBar.textContent = 'Processing Failed!';
+                setTimeout(() => {
+                    websiteProgressContainer.style.display = 'none';
+                    websiteProgressBar.style.width = '0%';
+                    websiteProgressBar.textContent = '0%';
                 }, 2000);
             }
         };

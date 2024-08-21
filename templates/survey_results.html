@@ -45,6 +45,15 @@
         .survey-result p {
             color: #333;
         }
+        .regenerate-btn {
+            background-color: #28a745;
+            color: white;
+            border: none;
+            padding: 5px 10px;
+            cursor: pointer;
+            border-radius: 5px;
+            margin-top: 10px;
+        }
         .back-link {
             display: block;
             margin-top: 20px;
@@ -56,6 +65,21 @@
         .back-link:hover {
             text-decoration: underline;
         }
+        .actions {
+            text-align: center;
+            margin-top: 20px;
+        }
+        .actions button {
+            padding: 10px 20px;
+            margin: 5px;
+            border-radius: 5px;
+            border: none;
+            cursor: pointer;
+            color: white;
+        }
+        .regenerate-all-btn {
+            background-color: #28a745;
+        }
     </style>
 </head>
 <body>
@@ -66,9 +90,51 @@
         <div class="survey-result">
             <h3>{{ question }}</h3>
             <p>{{ answer }}</p>
+            <button class="regenerate-btn" onclick="regenerateQuestion('{{ question }}')">Regenerate</button>
         </div>
         {% endfor %}
+        <div class="actions">
+            <button class="regenerate-all-btn" onclick="regenerateAllResponses()">Regenerate All Responses</button>
+        </div>
         <a href="{{ url_for('survey_results_list') }}" class="back-link">Back to Surveys</a>
     </div>
+    <script>
+        function regenerateQuestion(question) {
+            const encodedQuestion = encodeURIComponent(question);
+            const surveyTitle = '{{ survey.title }}';
+            fetch(`/regenerate_question/${surveyTitle}/${encodedQuestion}`)
+                .then(response => response.json())
+                .then(data => {
+                    if (data.success) {
+                        location.reload();
+                    } else {
+                        alert('Failed to regenerate response.');
+                    }
+                })
+                .catch(error => {
+                    console.error('Error:', error);
+                    alert('Failed to regenerate response.');
+                });
+        }
+
+        function regenerateAllResponses() {
+            const surveyTitle = '{{ survey.title }}';
+            if (confirm('Are you sure you want to regenerate all responses?')) {
+                fetch(`/regenerate_survey/${surveyTitle}`)
+                    .then(response => response.json())
+                    .then(data => {
+                        if (data.success) {
+                            location.reload();
+                        } else {
+                            alert('Failed to regenerate responses.');
+                        }
+                    })
+                    .catch(error => {
+                        console.error('Error:', error);
+                        alert('Failed to regenerate responses.');
+                    });
+            }
+        }
+    </script>
 </body>
 </html>

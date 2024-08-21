@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Create Survey</title>
+    <title>{{ 'Edit Survey' if survey else 'Create Survey' }}</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -21,7 +21,12 @@
         }
         h2 {
             text-align: center;
-            color: #333;
+            color: #007bff;
+            cursor: pointer;
+            text-decoration: none;
+        }
+        h2:hover {
+            text-decoration: underline;
         }
         .form-group {
             margin-bottom: 20px;
@@ -70,28 +75,49 @@
             background-color: #28a745;
             border: none;
         }
+        .survey-options {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 20px;
+        }
+        .survey-options button {
+            width: 48%;
+        }
     </style>
 </head>
 <body>
     <div class="container">
-        <h2>Create Survey</h2>
-        <form id="survey-form" method="POST" action="{{ url_for('create_survey') }}">
+        <a href="{{ url_for('home') }}"><h2>RAG Application</h2></a>
+        <div class="survey-options">
+            <button onclick="editSurvey()">Edit Survey</button>
+            <button onclick="deleteSurvey()">Delete Survey</button>
+        </div>
+        <form id="survey-form" method="POST" action="{{ url_for('create_survey') if not survey else url_for('edit_survey', title=survey.title) }}">
             <div class="form-group">
                 <label for="survey-title">Survey Title:</label>
-                <input type="text" id="survey-title" name="survey-title" placeholder="Enter survey title" required>
+                <input type="text" id="survey-title" name="survey-title" value="{{ survey.title if survey else '' }}" placeholder="Enter survey title" required>
             </div>
             <div id="questions-container">
-                <div class="form-group">
-                    <input type="text" name="question1" placeholder="Enter question 1" required>
-                    <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
-                </div>
+                {% if survey %}
+                    {% for question in survey.get_questions() %}
+                    <div class="form-group">
+                        <input type="text" name="question{{ loop.index }}" value="{{ question }}" required>
+                        <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
+                    </div>
+                    {% endfor %}
+                {% else %}
+                    <div class="form-group">
+                        <input type="text" name="question1" placeholder="Enter question 1" required>
+                        <button type="button" class="remove-question" onclick="removeQuestion(this)">Remove</button>
+                    </div>
+                {% endif %}
             </div>
             <button type="button" class="add-question" onclick="addQuestion()">Add Question</button>
-            <button type="submit">Create Survey</button>
+            <button type="submit">{{ 'Save Changes' if survey else 'Create Survey' }}</button>
         </form>
     </div>
     <script>
-        let questionCount = 1;
+        let questionCount = {{ survey.get_questions()|length if survey else 1 }};
 
         function addQuestion() {
             questionCount++;
@@ -107,6 +133,26 @@
         function removeQuestion(button) {
             const questionGroup = button.parentNode;
             questionGroup.parentNode.removeChild(questionGroup);
+        }
+
+        function editSurvey() {
+            const surveyTitle = document.getElementById('survey-title').value;
+            if (surveyTitle) {
+                window.location.href = `/edit_survey/${surveyTitle}`;
+            } else {
+                alert('Please enter the survey title to edit.');
+            }
+        }
+
+        function deleteSurvey() {
+            const surveyTitle = document.getElementById('survey-title').value;
+            if (surveyTitle) {
+                if (confirm('Are you sure you want to delete this survey?')) {
+                    window.location.href = `/delete_survey/${surveyTitle}`;
+                }
+            } else {
+                alert('Please enter the survey title to delete.');
+            }
         }
     </script>
 </body>
